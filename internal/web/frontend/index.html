@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%2338bdf8'/><stop offset='100%25' stop-color='%230ea5e9'/></linearGradient></defs><path d='M32 4L8 16v16c0 14.4 10.2 27.8 24 32 13.8-4.2 24-17.6 24-32V16L32 4z' fill='%230f172a' stroke='url(%23g)' stroke-width='3'/><path d='M24 30a10 10 0 0 1 16-8' stroke='%2338bdf8' stroke-width='3' fill='none' stroke-linecap='round'/><polygon points='40,19 40,26 34,22' fill='%2338bdf8'/><path d='M40 34a10 10 0 0 1-16 8' stroke='%234ade80' stroke-width='3' fill='none' stroke-linecap='round'/><polygon points='24,45 24,38 30,42' fill='%234ade80'/></svg>">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+:root {
+    --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-card: #1e293b;
+    --bg-card-hover: #334155; --border: #334155; --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8; --text-muted: #64748b; --accent: #38bdf8;
+    --accent-hover: #7dd3fc; --success: #4ade80; --error: #f87171; --warning: #fbbf24;
+    --purple: #a78bfa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border);
+}
+header h1 { font-size: 1.5rem; font-weight: 600; }
+header h1 .accent { color: var(--accent); }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+}
+.btn-primary { background: var(--accent); color: var(--bg-primary); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+.btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.btn-error { background: rgba(248,113,113,0.15); color: var(--error); border: 1px solid rgba(248,113,113,0.4); }
+.btn-error:hover { background: rgba(248,113,113,0.25); }
+.btn-danger { background: rgba(248,113,113,0.15); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }
+.btn-danger:hover { background: rgba(248,113,113,0.25); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Main tabs */
+.main-tabs { display: flex; gap: 2px; margin-bottom: 24px; background: var(--bg-secondary); border-radius: 8px; padding: 3px; }
+.main-tab {
+    padding: 10px 24px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    background: transparent; color: var(--text-muted); border: none; transition: all 0.15s ease; flex: 1; text-align: center;
+}
+.main-tab:hover { color: var(--text-secondary); }
+.main-tab.active { background: var(--bg-card-hover); color: var(--text-primary); }
+
+.status-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+}
+.status-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+}
+.status-card .label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-muted); margin-bottom: 8px;
+}
+.status-card .value { font-size: 1.5rem; font-weight: 700; }
+.status-card .sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+
+.badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600;
+}
+.badge-success { background: rgba(74,222,128,0.15); color: var(--success); }
+.badge-error { background: rgba(248,113,113,0.15); color: var(--error); }
+.badge-warning { background: rgba(251,191,36,0.15); color: var(--warning); }
+.badge-info { background: rgba(56,189,248,0.15); color: var(--accent); }
+.badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+.badge-clickable { cursor: pointer; transition: opacity 0.2s; }
+.badge-clickable:hover { opacity: 0.7; }
+
+.section { margin-bottom: 24px; }
+.section-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.section-header h2 { font-size: 1.125rem; font-weight: 600; }
+
+.config-bar {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 24px; display: flex; flex-wrap: wrap;
+    gap: 24px; font-size: 0.85rem;
+}
+.config-item { display: flex; align-items: center; gap: 8px; }
+.config-item .config-label { color: var(--text-muted); }
+.config-item .config-value {
+    color: var(--text-secondary); font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 0.8rem;
+}
+
+.add-form {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 12px;
+    align-items: center; flex-wrap: wrap;
+}
+.add-form input, .add-form select {
+    padding: 8px 12px; background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; outline: none;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; flex: 1; min-width: 120px;
+}
+.add-form input:focus, .add-form select:focus { border-color: var(--accent); }
+.add-form input::placeholder { color: var(--text-muted); }
+
+.table-wrap {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+th {
+    text-align: left; padding: 12px 16px; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+    background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border);
+}
+td {
+    padding: 10px 16px; font-size: 0.85rem; border-bottom: 1px solid var(--border);
+    color: var(--text-secondary); font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+.type-badge {
+    display: inline-block; width: 48px; padding: 1px 0; border-radius: 4px;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em;
+    vertical-align: middle; margin-right: 8px; text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.type-https { background: rgba(74,222,128,0.15); color: var(--success); }
+.type-http { background: rgba(56,189,248,0.15); color: var(--accent); }
+.type-dns { background: rgba(74,222,128,0.15); color: var(--success); }
+.type-cname { background: rgba(251,191,36,0.15); color: var(--warning); }
+
+.ping-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    vertical-align: middle;
+}
+.ping-up { background: var(--success); box-shadow: 0 0 4px var(--success); }
+.ping-down { background: var(--error); box-shadow: 0 0 4px var(--error); }
+.ping-pending { background: var(--text-muted); }
+
+.row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+.search-box {
+    padding: 8px 12px; background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; outline: none; width: 250px;
+}
+.search-box:focus { border-color: var(--accent); }
+.empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); display: flex; align-items: center;
+    justify-content: center; z-index: 100;
+}
+.modal {
+    background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px; min-width: 480px; max-width: 560px; max-height: 90vh; overflow-y: auto;
+}
+.modal h3 { margin-bottom: 16px; font-size: 1rem; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.form-group { margin-bottom: 12px; }
+.form-group label {
+    display: block; font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 8px 12px; background: var(--bg-primary);
+    border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+    font-size: 0.85rem; outline: none;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+.form-group textarea { min-height: 80px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; }
+.checkbox-row input[type=checkbox] { width: auto; }
+
+.setup-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+.setup-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 40px; text-align: center; max-width: 440px;
+}
+.setup-card h2 { margin-bottom: 8px; }
+.setup-card p { color: var(--text-secondary); margin-bottom: 20px; }
+.api-key-display {
+    background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin: 16px 0;
+}
+
+.replica-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between;
+    align-items: center; gap: 16px;
+}
+.replica-info { flex: 1; }
+.replica-info .replica-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+.replica-info .replica-url {
+    font-size: 0.8rem; color: var(--text-muted);
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+.replica-meta { display: flex; gap: 8px; align-items: center; }
+.replica-stats { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+.mode-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+}
+.mode-full { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.mode-rewrites { background: rgba(56,189,248,0.15); color: var(--accent); }
+.mode-blocklist { background: rgba(251,191,36,0.15); color: var(--warning); }
+
+.error-banner {
+    background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    color: var(--error); font-size: 0.875rem;
+}
+.spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid var(--accent); border-top-color: transparent;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+    position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.85rem; z-index: 200; animation: slideUp 0.3s ease;
+}
+.toast-success { border-color: var(--success); color: var(--success); }
+.toast-error { border-color: var(--error); color: var(--error); }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="container">
+
+  <header>
+    <h1><span class="accent">&#9670;</span> Nexus</h1>
+  </header>
+
+  <!-- Main Navigation Tabs -->
+  <div class="main-tabs">
+    <button class="main-tab" :class="{active: mainTab==='proxy'}" @click="mainTab='proxy'">Proxy</button>
+    <button class="main-tab" :class="{active: mainTab==='dns'}" @click="mainTab='dns'">DNS</button>
+    <button class="main-tab" :class="{active: mainTab==='sync'}" @click="mainTab='sync'">Sync</button>
+  </div>
+
+  <!-- Error Banner -->
+  <div v-if="activeErrors.length" class="error-banner" style="margin-bottom:16px;">
+    <div v-for="e in activeErrors" :key="e.key" style="margin-bottom:4px;">
+      <strong>{{ e.key }}:</strong> {{ e.message }}
+    </div>
+  </div>
+
+  <!-- ==================== PROXY TAB ==================== -->
+  <template v-if="mainTab==='proxy'">
+    <div class="config-bar">
+      <div class="config-item">
+        <span class="config-label">Cloudflare:</span>
+        <span :class="['badge', domainData.zones && domainData.zones.length ? 'badge-success' : 'badge-error']">
+          {{ domainData.zones && domainData.zones.length ? domainData.zones.length + ' zones' : 'N/A' }}
+        </span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">DNS:</span>
+        <span :class="['badge', health.dns_enabled ? 'badge-success' : 'badge-info']">
+          {{ health.dns_enabled ? 'Active' : 'Disabled' }}
+        </span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">TLS:</span>
+        <span :class="['badge', 'badge-clickable', health.le_staging ? 'badge-warning' : 'badge-success']"
+              @click="toggleStaging"
+              :title="'Click to switch to ' + (health.le_staging ? 'Production' : 'Staging')">
+          {{ health.le_staging ? 'Staging' : 'Production' }}
+        </span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Wildcard:</span>
+        <span :class="['badge', health.wildcard ? 'badge-success' : 'badge-info']">
+          {{ health.wildcard ? 'ON' : 'OFF' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="label">Routes</div>
+        <div class="value">{{ health.routes ?? 0 }}</div>
+        <div class="sub">Proxy targets</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Certificates</div>
+        <div class="value">{{ health.certs ?? 0 }}</div>
+        <div class="sub">TLS certs managed</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Uptime</div>
+        <div class="value" style="font-size:1.2rem">{{ formatUptime(health.uptime_seconds) }}</div>
+        <div class="sub">Since last restart</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Memory</div>
+        <div class="value">{{ health.memory_mb ?? 0 }} <span style="font-size:.8rem;font-weight:400">MB</span></div>
+        <div class="sub">{{ health.goroutines ?? 0 }} goroutines</div>
+      </div>
+    </div>
+
+    <!-- Provision Errors -->
+    <div v-if="health.provision_errors && health.provision_errors.length" class="section" style="margin-bottom:16px">
+      <div style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:12px 16px;">
+        <div style="font-weight:600;color:var(--error);margin-bottom:8px">Certificate Provisioning Errors</div>
+        <div v-for="pe in health.provision_errors" :key="pe.hostname" style="margin-bottom:6px;font-size:0.85rem;">
+          <span style="font-weight:500">{{ pe.hostname }}</span>
+          <span style="color:var(--text-muted);margin-left:8px">{{ pe.error }}</span>
+          <br>
+          <span style="color:var(--text-muted)">Retry after: {{ formatDateTime(pe.retry_after) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routes Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Routes</h2>
+        <input class="search-box" type="text" placeholder="Filter routes..." v-model="routeSearch">
+      </div>
+
+      <div class="add-form">
+        <input v-model="newSubdomain" placeholder="subdomain" @keyup.enter="addRoute" :disabled="creatingRoute" style="flex:0.8;min-width:100px;">
+        <span style="color:var(--text-muted);font-size:0.9rem;flex:0 0 auto;">.</span>
+        <template v-if="!manualDomainMode">
+          <select v-model="selectedDomain" style="flex:1;min-width:160px;">
+            <option v-for="d in allDomains" :key="d" :value="d">{{ d }}</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" @click="manualDomainMode=true" title="Manual entry" style="flex:0 0 auto;padding:4px 8px;">&#9998;</button>
+        </template>
+        <template v-else>
+          <input v-model="selectedDomain" placeholder="example.com" style="flex:1;min-width:160px;">
+          <button class="btn btn-ghost btn-sm" @click="manualDomainMode=false" title="Use dropdown" style="flex:0 0 auto;padding:4px 8px;">&#9776;</button>
+        </template>
+        <span style="color:var(--text-muted);font-size:0.9rem;flex:0 0 auto;">&#10142;</span>
+        <input v-model="newTarget" placeholder="192.168.1.x:port" @keyup.enter="addRoute" :disabled="creatingRoute" style="flex:1;">
+        <button class="btn btn-primary btn-sm" @click="addRoute" :disabled="creatingRoute || !newSubdomain || !selectedDomain || !newTarget">{{ creatingRoute ? 'Creating...' : 'Add Route' }}</button>
+      </div>
+
+      <div class="table-wrap">
+        <table v-if="filteredRoutes.length">
+          <thead>
+            <tr>
+              <th>Hostname</th>
+              <th>Target</th>
+              <th style="width:40px"></th>
+              <th>TLS</th>
+              <th>Auth</th>
+              <th>Status</th>
+              <th style="width:120px;text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in filteredRoutes" :key="r.id">
+              <td><a :href="(r.tls_enabled?'https://':'http://')+r.hostname" target="_blank" rel="noopener">{{ r.hostname }}</a></td>
+              <td>
+                <span class="type-badge" :class="r.target_url.startsWith('https') ? 'type-https' : 'type-http'">
+                  {{ r.target_url.startsWith('https') ? 'HTTPS' : 'HTTP' }}
+                </span>
+                <a :href="r.target_url.includes('://')?r.target_url:'http://'+r.target_url" target="_blank" rel="noopener">{{ stripScheme(r.target_url) }}</a>
+              </td>
+              <td>
+                <span v-if="pingResults[r.target_url]===true" class="ping-dot ping-up" title="Reachable"></span>
+                <span v-else-if="pingResults[r.target_url]===false" class="ping-dot ping-down" title="Unreachable"></span>
+                <span v-else class="ping-dot ping-pending" title="Checking..."></span>
+              </td>
+              <td><span class="badge" :class="r.tls_enabled?'badge-success':'badge-info'">{{ r.tls_enabled?'ON':'OFF' }}</span></td>
+              <td><span class="badge" :class="authBadgeClass(r.auth_type)">{{ r.auth_type }}</span></td>
+              <td><span class="badge" :class="r.enabled?'badge-success':'badge-error'">{{ r.enabled?'Active':'Off' }}</span></td>
+              <td>
+                <div class="row-actions">
+                  <template v-if="confirmDeleteRoute===r.id">
+                    <button class="btn btn-danger btn-sm" @click="doDeleteRoute(r.id)">Confirm</button>
+                    <button class="btn btn-ghost btn-sm" @click="confirmDeleteRoute=null">Cancel</button>
+                  </template>
+                  <template v-else>
+                    <button class="btn btn-ghost btn-sm" @click="openRouteModal(r)" title="Edit">&#9998;</button>
+                    <button class="btn btn-ghost btn-sm" @click="confirmDeleteRoute=r.id" title="Delete">&#10005;</button>
+                  </template>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="empty-state">No routes configured</div>
+      </div>
+    </div>
+
+    <!-- Certificates Section -->
+    <div class="section">
+      <div class="section-header"><h2>Certificates</h2></div>
+      <div class="table-wrap">
+        <table v-if="certs.length">
+          <thead><tr><th>Hostname</th><th>Issuer</th><th>Expires</th><th>Status</th><th style="width:80px;text-align:right">Actions</th></tr></thead>
+          <tbody>
+            <tr v-for="c in certs" :key="c.hostname">
+              <td>{{ c.hostname }}</td>
+              <td style="font-size:0.85rem;color:var(--text-muted)">{{ c.issuer || '—' }}</td>
+              <td>{{ formatDate(c.not_after) }}</td>
+              <td><span class="badge" :class="certStatus(c)">{{ certLabel(c) }}</span></td>
+              <td style="text-align:right"><button :class="['btn','btn-sm',certNeedsRenew(c)?'btn-error':'btn-ghost']" @click="renewCert(c.hostname)">Renew</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="empty-state">No certificates</div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ==================== DNS TAB ==================== -->
+  <template v-if="mainTab==='dns'">
+    <div class="section">
+      <div class="section-header">
+        <h2>DNS Rewrites</h2>
+        <input class="search-box" type="text" placeholder="Filter rewrites..." v-model="dnsSearch">
+      </div>
+
+      <div class="add-form">
+        <input v-model="dnsNewSubdomain" placeholder="subdomain" @keyup.enter="addRewrite" style="flex:0.8;min-width:100px;">
+        <span style="color:var(--text-muted);font-size:0.9rem;flex:0 0 auto;">.</span>
+        <template v-if="!dnsManualDomain">
+          <select v-model="dnsSelectedDomain" style="flex:1;min-width:160px;">
+            <option v-for="d in allDomains" :key="d" :value="d">{{ d }}</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" @click="dnsManualDomain=true" title="Manual entry" style="flex:0 0 auto;padding:4px 8px;">&#9998;</button>
+        </template>
+        <template v-else>
+          <input v-model="dnsSelectedDomain" placeholder="example.com" style="flex:1;min-width:160px;">
+          <button class="btn btn-ghost btn-sm" @click="dnsManualDomain=false" title="Use dropdown" style="flex:0 0 auto;padding:4px 8px;">&#9776;</button>
+        </template>
+        <input v-model="dnsNewAnswer" placeholder="192.168.1.x or hostname" @keyup.enter="addRewrite" style="flex:1;">
+        <button class="btn btn-primary btn-sm" @click="addRewrite" :disabled="!dnsNewSubdomain || !dnsSelectedDomain || !dnsNewAnswer">Add DNS</button>
+        <button class="btn btn-sm" style="background:var(--warning);color:var(--bg-primary);" @click="addProxyRewrite" :disabled="!dnsNewSubdomain || !dnsSelectedDomain || !domainData.proxy_ip" title="Add pointing to proxy IP">Add Proxy</button>
+      </div>
+
+      <div class="table-wrap">
+        <table v-if="filteredRewrites.length">
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Answer</th>
+              <th style="width:40px"></th>
+              <th style="width:100px;text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in filteredRewrites" :key="r.domain+r.answer">
+              <td>
+                <a v-if="isProxyAnswer(r.answer)" :href="'https://'+r.domain" target="_blank" rel="noopener">{{ r.domain }}</a>
+                <span v-else>{{ r.domain }}</span>
+              </td>
+              <td>
+                <span class="type-badge type-http" v-if="isProxyAnswer(r.answer)">PROXY</span>
+                <span class="type-badge type-dns" v-else-if="isIP(r.answer)">DNS</span>
+                <span class="type-badge type-cname" v-else>CNAME</span>
+                {{ r.answer }}
+              </td>
+              <td>
+                <span v-if="dnsPingResults[r.answer]===true" class="ping-dot ping-up" title="Reachable"></span>
+                <span v-else-if="dnsPingResults[r.answer]===false" class="ping-dot ping-down" title="Unreachable"></span>
+                <span v-else class="ping-dot ping-pending" title="Checking..."></span>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <template v-if="confirmDeleteRewrite && confirmDeleteRewrite.domain===r.domain && confirmDeleteRewrite.answer===r.answer">
+                    <button class="btn btn-danger btn-sm" @click="doDeleteRewrite(r)">Confirm</button>
+                    <button class="btn btn-ghost btn-sm" @click="confirmDeleteRewrite=null">Cancel</button>
+                  </template>
+                  <template v-else>
+                    <button class="btn btn-ghost btn-sm" @click="openEditRewrite(r)" title="Edit">&#9998;</button>
+                    <button class="btn btn-ghost btn-sm" @click="confirmDeleteRewrite=r" title="Delete">&#10005;</button>
+                  </template>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="empty-state">No rewrites found</div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ==================== SYNC TAB ==================== -->
+  <template v-if="mainTab==='sync'">
+    <div v-if="syncStatus.error && !syncStatus.success" class="error-banner">
+      <strong>Last sync failed:</strong> {{ syncStatus.error }}
+    </div>
+
+    <div class="config-bar">
+      <div class="config-item">
+        <span class="config-label">Primary:</span>
+        <span class="config-value">{{ syncStatus.primary_url || '(not configured)' }}</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Replicas:</span>
+        <span class="config-value">{{ replicas.length }}</span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">Interval:</span>
+        <span v-if="!editingInterval" class="config-value" style="cursor:pointer;" @click="startEditInterval" title="Click to edit">{{ syncStatus.sync_interval||0 }}s &#9998;</span>
+        <span v-else style="display:flex;gap:6px;align-items:center;">
+          <input class="config-value" type="number" min="10" v-model.number="intervalInput" @keyup.enter="saveInterval" @keyup.escape="editingInterval=false" style="width:70px;padding:2px 6px;background:var(--bg-primary);border:1px solid var(--accent);border-radius:4px;color:var(--text-primary);font-size:0.8rem;outline:none;">
+          <span class="config-value">s</span>
+          <button class="btn btn-primary btn-sm" style="padding:2px 8px;" @click="saveInterval">Save</button>
+          <button class="btn btn-ghost btn-sm" style="padding:2px 8px;" @click="editingInterval=false">Cancel</button>
+        </span>
+      </div>
+      <div class="config-item">
+        <span class="config-label">CNAME Flatten:</span>
+        <span :class="['badge', syncStatus.flatten_cnames?'badge-warning':'badge-info']">
+          {{ syncStatus.flatten_cnames?'ON':'OFF' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="label">Status</div>
+        <div class="value">
+          <span v-if="syncStatus.running" class="badge badge-warning">Syncing</span>
+          <span v-else-if="syncStatus.success" class="badge badge-success">Healthy</span>
+          <span v-else-if="syncStatus.last_sync" class="badge badge-error">Error</span>
+          <span v-else class="badge badge-info">Pending</span>
+        </div>
+        <div class="sub">Last: {{ formatTime(syncStatus.last_sync) }}</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Primary Rewrites</div>
+        <div class="value">{{ syncStatus.primary_count||0 }}</div>
+        <div class="sub">Source of truth</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Next Sync</div>
+        <div class="value" style="font-size:1rem;">{{ formatTime(syncStatus.next_sync) }}</div>
+        <div class="sub">{{ timeUntil(syncStatus.next_sync) }}</div>
+      </div>
+      <div class="status-card">
+        <div class="label">Actions</div>
+        <div class="value">
+          <button class="btn btn-primary btn-sm" @click="triggerSync" :disabled="syncStatus.running" style="font-size:0.8rem;">
+            <span v-if="syncStatus.running"><span class="spinner"></span>Syncing</span>
+            <span v-else>Sync Now</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Replicas Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Replicas</h2>
+        <button class="btn btn-primary btn-sm" @click="replicaModal={name:'',url:'',username:'',password:'',mode:'rewrites'}">Add Replica</button>
+      </div>
+
+      <div v-if="replicas.length===0" class="empty-state" style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;">
+        No replicas configured. Add one to start syncing.
+      </div>
+
+      <div v-for="r in replicas" :key="r.id" class="replica-card">
+        <div class="replica-info">
+          <div class="replica-name">
+            {{ r.name }}
+            <span :class="['mode-badge','mode-'+r.mode]">{{ r.mode }}</span>
+            <span v-if="getReplicaStatus(r.id)" style="margin-left:8px;">
+              <span v-if="getReplicaStatus(r.id).success" class="badge badge-success" style="font-size:0.65rem;">OK</span>
+              <span v-else class="badge badge-error" style="font-size:0.65rem;">ERR</span>
+            </span>
+          </div>
+          <div class="replica-url">{{ r.url }}</div>
+          <div v-if="getReplicaStatus(r.id)" class="replica-stats">
+            <span style="color:var(--success)">+{{ getReplicaStatus(r.id).added||0 }}</span>
+            <span style="color:var(--error);margin-left:6px;">&minus;{{ getReplicaStatus(r.id).removed||0 }}</span>
+            <span v-if="getReplicaStatus(r.id).error" style="color:var(--error);margin-left:8px;">{{ getReplicaStatus(r.id).error }}</span>
+          </div>
+        </div>
+        <div class="replica-meta">
+          <button class="btn btn-ghost btn-sm" @click="editReplica(r)">&#9998;</button>
+          <template v-if="confirmDeleteReplicaId===r.id">
+            <button class="btn btn-danger btn-sm" @click="doDeleteReplica(r.id)">Confirm</button>
+            <button class="btn btn-ghost btn-sm" @click="confirmDeleteReplicaId=null">Cancel</button>
+          </template>
+          <button v-else class="btn btn-ghost btn-sm" @click="confirmDeleteReplicaId=r.id">&#10005;</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Edit Route Modal -->
+  <div v-if="showRouteModal" class="modal-overlay" @click.self="showRouteModal=false">
+    <div class="modal">
+      <h3>{{ editingRoute ? 'Edit Route' : 'Add Route' }}</h3>
+      <div class="form-group"><label>Hostname</label><input v-model="routeForm.hostname" placeholder="app.example.com"></div>
+      <div class="form-group"><label>Target URL</label><input v-model="routeForm.target_url" placeholder="http://192.168.1.100:8080"></div>
+      <div class="form-group"><label>Auth Type</label>
+        <select v-model="routeForm.auth_type">
+          <option value="none">None</option><option value="forward">Forward Auth</option>
+          <option value="oauth">OAuth / OIDC</option><option value="basic">Basic Auth</option>
+        </select>
+      </div>
+      <div class="form-group" v-if="routeForm.auth_type!=='none'">
+        <label>Auth Config (JSON)</label>
+        <textarea v-model="routeForm.auth_config" :placeholder="authPlaceholder"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><div class="checkbox-row"><input type="checkbox" v-model="routeForm.tls_enabled" id="tls"><label for="tls">TLS</label></div></div>
+        <div class="form-group"><div class="checkbox-row"><input type="checkbox" v-model="routeForm.preserve_host" id="ph"><label for="ph">Preserve Host</label></div></div>
+        <div class="form-group"><div class="checkbox-row"><input type="checkbox" v-model="routeForm.enabled" id="en"><label for="en">Enabled</label></div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" @click="showRouteModal=false">Cancel</button>
+        <button class="btn btn-primary" @click="saveRoute">{{ editingRoute?'Update':'Create' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Rewrite Modal -->
+  <div v-if="editRewriteModal" class="modal-overlay" @click.self="editRewriteModal=null">
+    <div class="modal">
+      <h3>Edit Rewrite</h3>
+      <div class="form-group"><label>Domain</label><input v-model="editRewriteModal.domain" @keyup.enter="saveEditRewrite"></div>
+      <div class="form-group"><label>Answer</label><input v-model="editRewriteModal.answer" @keyup.enter="saveEditRewrite"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" @click="editRewriteModal=null">Cancel</button>
+        <button class="btn btn-primary btn-sm" @click="saveEditRewrite" :disabled="!editRewriteModal.domain||!editRewriteModal.answer">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Replica Modal -->
+  <div v-if="replicaModal" class="modal-overlay" @click.self="replicaModal=null">
+    <div class="modal">
+      <h3>{{ replicaModal.id?'Edit':'Add' }} Replica</h3>
+      <div class="form-group"><label>Name</label><input v-model="replicaModal.name" placeholder="e.g. Office DNS"></div>
+      <div class="form-group"><label>URL</label><input v-model="replicaModal.url" placeholder="http://192.168.1.2:3000"></div>
+      <div class="form-group"><label>Username</label><input v-model="replicaModal.username" placeholder="admin"></div>
+      <div class="form-group"><label>Password</label><input v-model="replicaModal.password" type="password"></div>
+      <div class="form-group"><label>Sync Mode</label>
+        <select v-model="replicaModal.mode">
+          <option value="full">Full (Rewrites + Block Lists)</option>
+          <option value="rewrites">DNS Rewrites Only</option>
+          <option value="blocklist">Block Lists Only</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" @click="replicaModal=null">Cancel</button>
+        <button class="btn btn-primary btn-sm" @click="saveReplica" :disabled="!replicaModal.name||!replicaModal.url">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div v-if="toast" :class="['toast','toast-'+toast.type]">{{ toast.msg }}</div>
+</div>
+</div>
+
+<script>
+const {createApp,ref,computed,reactive,onMounted,onUnmounted,watch} = Vue
+createApp({
+  setup(){
+    const mainTab = ref('proxy')
+    const toast = ref(null)
+
+    // Proxy state
+    const routes = ref([])
+    const certs = ref([])
+    const health = ref({})
+    const domainData = ref({zones:[],default_domain:'',proxy_ip:''})
+    const routeSearch = ref('')
+    const pingResults = reactive({})
+    const newSubdomain = ref('')
+    const newTarget = ref('')
+    const creatingRoute = ref(false)
+    const selectedDomain = ref('')
+    const manualDomainMode = ref(false)
+    const confirmDeleteRoute = ref(null)
+    const showRouteModal = ref(false)
+    const editingRoute = ref(null)
+    const routeForm = ref(defaultRouteForm())
+
+    // DNS state
+    const rewrites = ref([])
+    const dnsSearch = ref('')
+    const dnsPingResults = reactive({})
+    const dnsNewSubdomain = ref('')
+    const dnsNewAnswer = ref('')
+    const dnsSelectedDomain = ref('')
+    const dnsManualDomain = ref(false)
+    const confirmDeleteRewrite = ref(null)
+    const editRewriteModal = ref(null)
+    const editRewriteOriginal = ref(null)
+
+    // Sync state
+    const syncStatus = ref({})
+    const replicas = ref([])
+    const replicaModal = ref(null)
+    const confirmDeleteReplicaId = ref(null)
+    const editingInterval = ref(false)
+    const intervalInput = ref(300)
+
+    // Error tracking
+    const apiErrors = reactive({})
+    function setError(key, msg) { apiErrors[key] = msg }
+    function clearError(key) { delete apiErrors[key] }
+    const activeErrors = computed(() => {
+      const out = []
+      for (const [k, v] of Object.entries(apiErrors)) { if (v) out.push({ key: k, message: v }) }
+      return out
+    })
+
+    function defaultRouteForm(){return{hostname:'',target_url:'',tls_enabled:true,auth_type:'none',auth_config:'{}',preserve_host:false,enabled:true}}
+    function showToast(msg,type='success'){toast.value={msg,type};setTimeout(()=>toast.value=null,3000)}
+
+    const authPlaceholder = computed(()=>{
+      const p={forward:'{"url":"http://authelia:9091/api/verify"}',oauth:'{"issuer":"...","client_id":"...","client_secret":"...","redirect_uri":".../_oauth/callback"}',basic:'{"users":{"admin":"$2a$10$..."}}'};
+      return p[routeForm.value.auth_type]||'{}'
+    })
+    const allDomains = computed(()=>{
+      const set = new Set(domainData.value.zones||[])
+      if(domainData.value.default_domain)set.add(domainData.value.default_domain)
+      return[...set].sort()
+    })
+    const filteredRoutes = computed(()=>{
+      let r=[...routes.value].sort((a,b)=>a.hostname.localeCompare(b.hostname))
+      if(routeSearch.value){const q=routeSearch.value.toLowerCase();r=r.filter(x=>x.hostname.toLowerCase().includes(q)||x.target_url.toLowerCase().includes(q))}
+      return r
+    })
+    const filteredRewrites = computed(()=>{
+      let r=[...rewrites.value].sort((a,b)=>a.domain.localeCompare(b.domain))
+      if(dnsSearch.value){const q=dnsSearch.value.toLowerCase();r=r.filter(x=>x.domain.toLowerCase().includes(q)||x.answer.toLowerCase().includes(q))}
+      return r
+    })
+
+    // API helper
+    async function api(path,opts={}){
+      const h={'Content-Type':'application/json',...(opts.headers||{})}
+      const r=await fetch('/api/v1'+path,{...opts,headers:h})
+      if(!r.ok){const e=await r.json().catch(()=>({error:'request failed'}));throw new Error(e.error||r.statusText)}
+      if(r.status===204)return null
+      return r.json()
+    }
+
+    // Resilient fetch — returns data on success, null on failure, tracks errors
+    async function safeFetch(key, path) {
+      try {
+        const data = await api(path)
+        clearError(key)
+        return data
+      } catch(e) {
+        setError(key, e.message)
+        return null
+      }
+    }
+
+    // Data fetching — each call independent, one failure doesn't blank the rest
+    async function refreshProxy(){
+      const [r, c, h, d] = await Promise.all([
+        safeFetch('routes', '/routes'),
+        safeFetch('certs', '/certs'),
+        safeFetch('health', '/health'),
+        safeFetch('domains', '/domains')
+      ])
+      if (r !== null) routes.value = r
+      if (c !== null) certs.value = c
+      if (h !== null) health.value = h
+      if (d !== null) {
+        domainData.value = d
+        if (d.error) setError('cloudflare', d.error)
+        else clearError('cloudflare')
+        if (!selectedDomain.value && d.default_domain) selectedDomain.value = d.default_domain
+        if (!dnsSelectedDomain.value && d.default_domain) dnsSelectedDomain.value = d.default_domain
+      }
+      runProxyPingChecks()
+    }
+    async function refreshDNS(){
+      const data = await safeFetch('rewrites', '/rewrites')
+      if (data !== null) { rewrites.value = data; runDNSPingChecks() }
+    }
+    async function refreshSync(){
+      const [s, r] = await Promise.all([
+        safeFetch('sync', '/sync/status'),
+        safeFetch('replicas', '/replicas')
+      ])
+      if (s !== null) syncStatus.value = s
+      if (r !== null) replicas.value = r
+    }
+    async function refreshAll(){await Promise.all([refreshProxy(),refreshDNS(),refreshSync()])}
+
+    async function toggleStaging(){
+      const newVal = !health.value.le_staging
+      const label = newVal ? 'Staging' : 'Production'
+      if(!confirm(`Switch TLS to ${label}? New certificates will be issued in ${label} mode.`)) return
+      try {
+        await api('/settings',{method:'PUT',body:JSON.stringify({le_staging:newVal})})
+        health.value.le_staging = newVal
+        const mismatched = certs.value.filter(c => c.is_staging !== newVal)
+        if(mismatched.length > 0 && confirm(`${mismatched.length} cert(s) were issued in ${newVal ? 'Production' : 'Staging'} mode. Re-provision them now as ${label}?`)){
+          for(const c of mismatched){
+            try { await api('/certs/'+encodeURIComponent(c.hostname)+'/renew',{method:'POST'}) } catch(e){ showToast(`Failed to renew ${c.hostname}: ${e.message}`,'error') }
+          }
+          showToast(`Re-provisioning ${mismatched.length} cert(s)`)
+          refreshProxy()
+        }
+      } catch(e) { alert('Failed to update: '+e.message) }
+    }
+
+    // Ping helpers
+    async function checkPing(target,results){
+      if(results[target]!==undefined)return
+      results[target]=null
+      try{const r=await api('/ping?host='+encodeURIComponent(target));results[target]=r.reachable}catch{results[target]=false}
+    }
+    function runProxyPingChecks(){const seen=new Set();for(const r of routes.value){if(!seen.has(r.target_url)){seen.add(r.target_url);checkPing(r.target_url,pingResults)}}}
+    function runDNSPingChecks(){const seen=new Set();for(const r of rewrites.value){if(!seen.has(r.answer)){seen.add(r.answer);checkPing(r.answer,dnsPingResults)}}}
+
+    // Proxy actions
+    async function addRoute(){
+      if(!newSubdomain.value||!selectedDomain.value||!newTarget.value)return
+      const hostname=newSubdomain.value+'.'+selectedDomain.value
+      let target=newTarget.value;if(!target.includes('://'))target='http://'+target
+      creatingRoute.value=true
+      try{
+        const res=await api('/routes',{method:'POST',body:JSON.stringify({hostname,target_url:target,tls_enabled:true,auth_type:'none',auth_config:'{}',preserve_host:false,enabled:true})})
+        newSubdomain.value='';newTarget.value='';delete pingResults[target]
+        showToast('Route created: '+hostname)
+        if(res.dns){
+          if(res.dns.primary)showToast('DNS added to primary')
+          else if(res.dns.primary_error)showToast('DNS primary failed: '+res.dns.primary_error,'error')
+          if(res.dns.replicas>0)showToast('DNS added to '+res.dns.replicas+' replica(s)')
+          if(res.dns.replica_errors&&res.dns.replica_errors.length)res.dns.replica_errors.forEach(e=>showToast('DNS replica: '+e,'error'))
+        }
+        refreshProxy();refreshDNS()
+      }catch(e){showToast(e.message,'error')}
+      finally{creatingRoute.value=false}
+    }
+    function openRouteModal(r){if(r){editingRoute.value=r;routeForm.value={...r}}else{editingRoute.value=null;routeForm.value=defaultRouteForm()};showRouteModal.value=true}
+    async function saveRoute(){
+      try{
+        if(editingRoute.value){await api('/routes/'+editingRoute.value.id,{method:'PUT',body:JSON.stringify(routeForm.value)});showToast('Route updated')}
+        else{await api('/routes',{method:'POST',body:JSON.stringify(routeForm.value)});showToast('Route created')}
+        showRouteModal.value=false;refreshProxy();refreshDNS()
+      }catch(e){showToast(e.message,'error')}
+    }
+    async function doDeleteRoute(id){
+      confirmDeleteRoute.value=null;const r=routes.value.find(x=>x.id===id);routes.value=routes.value.filter(x=>x.id!==id)
+      try{await api('/routes/'+id,{method:'DELETE'});showToast('Route deleted');refreshProxy();refreshDNS()}catch(e){showToast(e.message,'error');if(r)routes.value.push(r)}
+    }
+    async function renewCert(hostname){try{await api('/certs/'+hostname+'/renew',{method:'POST'});showToast('Renewal started');refreshProxy()}catch(e){showToast(e.message,'error')}}
+
+    // DNS actions
+    async function addRewrite(){
+      if(!dnsNewSubdomain.value||!dnsSelectedDomain.value||!dnsNewAnswer.value)return
+      const domain=dnsNewSubdomain.value+'.'+dnsSelectedDomain.value
+      try{await api('/rewrites',{method:'POST',body:JSON.stringify({domain,answer:dnsNewAnswer.value})});dnsNewSubdomain.value='';dnsNewAnswer.value='';showToast('Rewrite added');setTimeout(refreshDNS,1000)}catch(e){showToast(e.message,'error')}
+    }
+    async function addProxyRewrite(){
+      if(!dnsNewSubdomain.value||!dnsSelectedDomain.value||!domainData.value.proxy_ip)return
+      const domain=dnsNewSubdomain.value+'.'+dnsSelectedDomain.value
+      try{await api('/rewrites',{method:'POST',body:JSON.stringify({domain,answer:domainData.value.proxy_ip})});dnsNewSubdomain.value='';showToast('Proxy rewrite added');setTimeout(refreshDNS,1000)}catch(e){showToast(e.message,'error')}
+    }
+    function openEditRewrite(r){editRewriteOriginal.value={domain:r.domain,answer:r.answer};editRewriteModal.value={domain:r.domain,answer:r.answer}}
+    async function saveEditRewrite(){
+      if(!editRewriteModal.value||!editRewriteModal.value.domain||!editRewriteModal.value.answer)return
+      try{await api('/rewrites',{method:'PUT',body:JSON.stringify({old:editRewriteOriginal.value,new:editRewriteModal.value})});editRewriteModal.value=null;showToast('Rewrite updated');setTimeout(refreshDNS,1000)}catch(e){showToast(e.message,'error')}
+    }
+    async function doDeleteRewrite(r){
+      rewrites.value=rewrites.value.filter(rw=>!(rw.domain===r.domain&&rw.answer===r.answer));confirmDeleteRewrite.value=null
+      try{await api('/rewrites',{method:'DELETE',body:JSON.stringify({domain:r.domain,answer:r.answer})});showToast('Rewrite deleted');setTimeout(refreshDNS,1000)}catch(e){showToast(e.message,'error');refreshDNS()}
+    }
+
+    // Sync actions
+    async function triggerSync(){try{await api('/sync/trigger',{method:'POST'});setTimeout(refreshSync,500);setTimeout(refreshSync,2000);setTimeout(refreshSync,5000)}catch(e){showToast(e.message,'error')}}
+    function getReplicaStatus(id){if(!syncStatus.value.replicas)return null;return syncStatus.value.replicas.find(r=>r.id===id)}
+    function startEditInterval(){intervalInput.value=syncStatus.value.sync_interval||300;editingInterval.value=true}
+    async function saveInterval(){
+      if(intervalInput.value<10)return;editingInterval.value=false
+      try{await api('/sync/interval',{method:'PUT',body:JSON.stringify({seconds:intervalInput.value})});showToast('Interval updated');setTimeout(refreshSync,1000)}catch(e){showToast(e.message,'error')}
+    }
+    function editReplica(r){replicaModal.value={...r}}
+    async function saveReplica(){
+      const m=replicaModal.value;if(!m||!m.name||!m.url)return
+      try{
+        if(m.id){await api('/replicas/'+m.id,{method:'PUT',body:JSON.stringify(m)})}
+        else{await api('/replicas',{method:'POST',body:JSON.stringify(m)})}
+        replicaModal.value=null;showToast('Replica saved');refreshSync()
+      }catch(e){showToast(e.message,'error')}
+    }
+    async function doDeleteReplica(id){try{await api('/replicas/'+id,{method:'DELETE'});confirmDeleteReplicaId.value=null;showToast('Replica deleted');refreshSync()}catch(e){showToast(e.message,'error')}}
+
+    // Helpers
+    function stripScheme(url){return url.replace(/^https?:\/\//,'')}
+    function isIP(val){return/^(\d{1,3}\.){3}\d{1,3}$/.test(val)||val.includes(':')}
+    function isProxyAnswer(answer){return domainData.value.proxy_ip&&answer===domainData.value.proxy_ip}
+    function certStatus(c){const d=new Date(c.not_after);const now=new Date();if(d<now)return'badge-error';if(!c.trusted)return'badge-error';if(c.is_staging!==health.value.le_staging)return'badge-error';if(d<new Date(now.getTime()+7*86400000))return'badge-warning';return'badge-success'}
+    function certLabel(c){const d=new Date(c.not_after);const now=new Date();if(d<now)return'Expired';if(!c.trusted)return'Untrusted';if(c.is_staging!==health.value.le_staging)return'Conflict';if(d<new Date(now.getTime()+7*86400000))return'Expiring';return'Valid'}
+    function certNeedsRenew(c){return new Date(c.not_after)<new Date()||!c.trusted||c.is_staging!==health.value.le_staging}
+    function authBadgeClass(t){return{'none':'badge-info','forward':'badge-purple','oauth':'badge-warning','basic':'badge-success'}[t]||'badge-info'}
+    function formatUptime(s){if(!s)return'--';const d=Math.floor(s/86400);const h=Math.floor((s%86400)/3600);const m=Math.floor((s%3600)/60);if(d>0)return d+'d '+h+'h';return h+'h '+m+'m'}
+    function formatDate(t){if(!t)return'--';return new Date(t).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}
+    function formatDateTime(t){if(!t)return'--';const d=new Date(t);const now=new Date();const diff=d-now;if(diff<=0)return'now';const mins=Math.floor(diff/60000);const hrs=Math.floor(mins/60);if(hrs>0)return d.toLocaleString()+' (in '+hrs+'h '+mins%60+'m)';if(mins>0)return d.toLocaleString()+' (in '+mins+'m)';return d.toLocaleString()+' (shortly)'}
+    function formatTime(t){if(!t||t==='0001-01-01T00:00:00Z')return'Never';return new Date(t).toLocaleString()}
+    function timeUntil(t){if(!t||t==='0001-01-01T00:00:00Z')return'';const diff=new Date(t)-new Date();if(diff<0)return'now';const mins=Math.floor(diff/60000);const secs=Math.floor((diff%60000)/1000);if(mins>0)return'in '+mins+'m '+secs+'s';return'in '+secs+'s'}
+
+    let poll=null
+    onMounted(()=>{
+      refreshAll()
+      poll=setInterval(refreshAll,15000)
+      setInterval(()=>{Object.keys(pingResults).forEach(k=>delete pingResults[k]);Object.keys(dnsPingResults).forEach(k=>delete dnsPingResults[k]);runProxyPingChecks();runDNSPingChecks()},60000)
+    })
+    onUnmounted(()=>{if(poll)clearInterval(poll)})
+
+    return{
+      mainTab,toast,activeErrors,
+      routes,certs,health,domainData,routeSearch,pingResults,
+      newSubdomain,newTarget,creatingRoute,selectedDomain,manualDomainMode,allDomains,filteredRoutes,
+      confirmDeleteRoute,showRouteModal,editingRoute,routeForm,authPlaceholder,
+      rewrites,dnsSearch,dnsPingResults,dnsNewSubdomain,dnsNewAnswer,dnsSelectedDomain,dnsManualDomain,
+      filteredRewrites,confirmDeleteRewrite,editRewriteModal,
+      syncStatus,replicas,replicaModal,confirmDeleteReplicaId,editingInterval,intervalInput,
+      toggleStaging,addRoute,openRouteModal,saveRoute,doDeleteRoute,renewCert,
+      addRewrite,addProxyRewrite,openEditRewrite,saveEditRewrite,doDeleteRewrite,
+      triggerSync,getReplicaStatus,startEditInterval,saveInterval,editReplica,saveReplica,doDeleteReplica,
+      stripScheme,isIP,isProxyAnswer,certStatus,certLabel,certNeedsRenew,authBadgeClass,
+      formatUptime,formatDate,formatDateTime,formatTime,timeUntil,showToast
+    }
+  }
+}).mount('#app')
+</script>
+</body>
+</html>

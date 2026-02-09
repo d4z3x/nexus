@@ -1,0 +1,6 @@
+.env
+nexus.db
+nexus.db-wal
+nexus.db-shm
+nexus
+data/
